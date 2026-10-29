@@ -1,13 +1,15 @@
 {
   "mcpServers": {
-    "alpaca": {
-      "command": "uvx",
-      "args": ["alpaca-mcp-server"],
+    "zerodha": {
+      "command": "npx",
+      "args": ["mcp-remote", "https://mcp.kite.trade/mcp"]
+    },
+    "zerodha-local": {
+      "command": "node",
+      "args": ["/path/to/zerodhamcpserver/dist/index.js"],
       "env": {
-        "ALPACA_API_KEY": "YOUR_PAPER_API_KEY_TYPED_HERE_NEVER_IN_CHAT",
-        "ALPACA_SECRET_KEY": "YOUR_PAPER_SECRET_KEY_TYPED_HERE_NEVER_IN_CHAT",
-        "ALPACA_PAPER_TRADE": "true",
-        "ALPACA_TOOLSETS": "account,trading,stock-data"
+        "ZERODHA_API_KEY": "YOUR_KITE_API_KEY",
+        "ZERODHA_API_SECRET": "YOUR_KITE_API_SECRET"
       }
     }
   }

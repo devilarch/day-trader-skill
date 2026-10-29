@@ -49,6 +49,19 @@ level`, `--offline FILE` (a saved Yahoo chart JSON for an ATR stop).
 
 ## Stops and targets
 
+### Mandatory Resistance & Support Anchoring
+Targets and stop-losses must NEVER be calculated purely through abstract arithmetic.
+They must always be cross-referenced with concrete chart levels and volume:
+1. **Target 1 (Primary / De-risking Target):** Must be placed immediately below
+   the nearest major resistance band (R1) or swing high where selling pressure /
+   rejection volume previously appeared. Used to book partial profit (50%-70%)
+   and move Stop-Loss to breakeven (cost).
+2. **Target 2 (Runner / Breakout Target):** Placed at secondary resistance (R2)
+   or the expanded target, achievable only if R1 is breached with strong volume.
+3. **Stop-Loss (Structural S/L):** Placed directly beneath key structural support
+   (S1, VWAP, or consolidation low), never arbitrarily, ensuring the trade setup
+   remains invalid if hit while preventing premature stop-outs by normal noise.
+
 | stop | where it goes |
 | --- | --- |
 | `or-mid` | the opening-range midpoint (the default for an opening-range breakout) |

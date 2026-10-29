@@ -1,19 +1,16 @@
 ---
 name: trader-broker
 description: >-
-  Order Executor. Sends approved orders to your broker, paper trading by
-  default, never without your yes. Shows each order as a plain ticket (a
-  bracket shows its stop-loss, take-profit and the max loss at the stop)
-  plus the exact JSON for Alpaca's place_stock_order, records your yes word
-  for word, then Claude's own Allow once / Deny card asks again. Builds the
-  sell ticket that closes a day trade by your flat-by time, records fills,
-  and logs each trade's max loss so trader-risk can hold the daily limit.
-  Covers setting up Alpaca's official MCP server in Claude Desktop (paper by
-  default, keys in env vars, never in chat), the Interactive Brokers
-  connector, and setting order tools to "Needs approval". Use when the user
-  says "place the order", "buy it", "execute", "send it to my broker",
-  "close my position", "flatten", "get me out", "connect Alpaca", "set up
-  paper trading", or after /trader-risk passes.
+  Order Executor for Indian Markets (NSE/BSE). Sends approved orders to Zerodha Kite
+  MCP (zerodhamcpserver / kite-mcp-server), paper trading by default, never without
+  your explicit yes. Shows each order as a plain ticket (shows stop-loss, take-profit
+  and max loss in INR ₹) plus the exact JSON for Zerodha's place_order tool (variety:
+  regular, product: MIS, validity: DAY), records your yes word for word, then Claude's
+  own Allow once / Deny card asks again. Builds the sell ticket that closes a day trade
+  before the 15:15 IST broker auto-square-off cutoff, records fills, and logs each
+  trade's max loss. Use when the user says "place the order", "buy it", "execute",
+  "send to Zerodha", "close my position", "flatten", "get me out", "connect Zerodha",
+  or after /trader-risk passes.
 argument-hint: "[order number]"
 ---
 
@@ -55,37 +52,48 @@ is a real yes for that order, builds the flatten ticket, and keeps the log in
 | `trader/portfolio.json` | cash and shares, updated by `fill` and by `result --filled-qty` |
 | `trader/plan.json` | the flat-by time for `flatten` |
 
-## Setup A: Alpaca (official MCP server, Claude Desktop)
+## Setup: Zerodha Kite MCP (Claude Desktop & Claude Code)
 
-Alpaca's own server is github.com/alpacahq/alpaca-mcp-server (MIT). It runs on
-the user's computer inside Claude Desktop. It is not in Claude's connector
-directory. It trades on a **paper** account unless told otherwise. Checked
-against its source on 2026-10-20 (version 2.4.0).
+Zerodha Kite Connect can be connected via official or community MCP servers:
+- **Hosted Zerodha MCP**: `https://mcp.kite.trade/mcp` (via `mcp-remote`)
+- **Self-Hosted Zerodha MCP (`zerodhamcpserver`)**: e.g., `github.com/manucr619/zerodha-mcpserver` or `zerodha/kite-mcp-server`.
 
-1. The user makes an Alpaca account and creates **paper trading** API keys in
-   the Alpaca dashboard. Paper keys are separate from live keys.
-2. The user installs `uv` (it provides `uvx`), from docs.astral.sh/uv.
-3. In Claude Desktop: Settings > Developer > Edit Config. That opens
-   `claude_desktop_config.json` (macOS: `~/Library/Application Support/Claude/`,
-   Windows: `%APPDATA%\Claude\`). The user adds this block (also in
-   `claude_desktop_config.example.json` here) and types their own keys into the file:
+1. Get your Kite Connect API Key and Secret from developers.kite.trade.
+2. In Claude Desktop: Settings > Developer > Edit Config (`claude_desktop_config.json`).
+3. Add the Zerodha MCP server block:
 
 ```json
 {
   "mcpServers": {
-    "alpaca": {
-      "command": "uvx",
-      "args": ["alpaca-mcp-server"],
+    "zerodha": {
+      "command": "npx",
+      "args": ["mcp-remote", "https://mcp.kite.trade/mcp"]
+    }
+  }
+}
+```
+
+Or for a local `zerodhamcpserver` instance:
+
+```json
+{
+  "mcpServers": {
+    "zerodha": {
+      "command": "node",
+      "args": ["/path/to/zerodhamcpserver/dist/index.js"],
       "env": {
-        "ALPACA_API_KEY": "paste your paper key here, in this file only",
-        "ALPACA_SECRET_KEY": "paste your paper secret here, in this file only",
-        "ALPACA_PAPER_TRADE": "true",
-        "ALPACA_TOOLSETS": "account,trading,stock-data"
+        "ZERODHA_API_KEY": "YOUR_KITE_API_KEY",
+        "ZERODHA_API_SECRET": "YOUR_KITE_API_SECRET"
       }
     }
   }
 }
 ```
+
+4. **Set tool permissions**:
+   - `place_order`: **Needs approval**. Never Always allow.
+   - `cancel_order`, `modify_order`: Needs approval.
+   - Read-only tools (`get_positions`, `get_holdings`, `get_quotes`, `get_orders`): Always allow.
 
    The `env` block hands the keys to the server as environment variables.
    **Keys never go in the chat.** Never ask for them, never read this file

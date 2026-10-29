@@ -52,10 +52,17 @@ day bar by bar without waiting.
 
 ## The rule
 
+- **Mandatory Support, Resistance & Volume Pre-Check:**
+  BEFORE recommending or setting any entry level, you MUST analyze the stock's
+  recent 15-30 day price structure, key resistance zones (R1, R2), structural
+  supports (S1, S2), and volume profiles. Never recommend buying right below an
+  untested resistance wall without highlighting the resistance or waiting for a
+  confirmed volume breakout above it.
 - **Opening range (orb).** The high and low of the first 15 minutes: the
   9:30, 9:35 and 9:40 five-minute bars, or fifteen 1-minute bars. The level
   to beat is the range high.
-- **Level.** A price you give, like a 20-day high from `/trader-scanner`.
+- **Level.** A price you give, anchored to a validated resistance breakout level
+  or support bounce level (with historical volume confirmation).
 - **The trigger** is the first completed bar after the range that CLOSES
   above the level. A wick above is not a trigger. A close exactly at the
   level is not above it.
