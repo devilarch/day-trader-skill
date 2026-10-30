@@ -18,6 +18,45 @@ import os
 import sys
 
 
+def calculate_fibonacci_levels(swing_high: float, swing_low: float, point_c: float = None):
+    """
+    Computes Fibonacci retracement and extension levels from a swing move:
+      - Retracements: 23.6%, 38.2%, 50.0%, 61.8% (Golden Ratio), 78.6%
+      - Extensions: 100.0%, 127.2%, 161.8%, 200.0%, 261.8%
+    """
+    if swing_high <= swing_low:
+        raise ValueError(f"Swing high (₹{swing_high}) must be strictly greater than swing low (₹{swing_low})")
+
+    diff = swing_high - swing_low
+    c = point_c if point_c is not None else swing_low
+
+    retracements = {
+        "23.6%": round(swing_high - diff * 0.236, 2),
+        "38.2%": round(swing_high - diff * 0.382, 2),
+        "50.0%": round(swing_high - diff * 0.500, 2),
+        "61.8%": round(swing_high - diff * 0.618, 2),
+        "78.6%": round(swing_high - diff * 0.786, 2),
+    }
+
+    extensions = {
+        "100.0%": round(c + diff * 1.000, 2),
+        "127.2%": round(c + diff * 1.272, 2),
+        "161.8%": round(c + diff * 1.618, 2),
+        "200.0%": round(c + diff * 2.000, 2),
+        "261.8%": round(c + diff * 2.618, 2),
+    }
+
+    return {
+        "swing_high": swing_high,
+        "swing_low": swing_low,
+        "point_c": c,
+        "range": round(diff, 2),
+        "golden_ratio_buy_zone": f"₹{retracements['61.8%']:,.2f} - ₹{retracements['38.2%']:,.2f}",
+        "retracements": retracements,
+        "extensions": extensions
+    }
+
+
 def calculate_trailing_stop(entry: float, initial_stop: float, current_price: float, highest_price: float = None, atr: float = None, swing_low: float = None):
     """
     Evaluates current trade stage and computes the ratcheted trailing stop price:
@@ -78,13 +117,19 @@ def calculate_trailing_stop(entry: float, initial_stop: float, current_price: fl
     }
 
 
-def plan_exit(symbol, entry, or_high=None, or_low=None, risk_reward=1.5, support=None, r1=None, r2=None, atr=None):
-    # Anchor Stop-Loss to validated Support
+def plan_exit(symbol, entry, or_high=None, or_low=None, risk_reward=1.5, support=None, r1=None, r2=None, atr=None, fib_high=None, fib_low=None, fib_c=None):
+    fib_levels = None
+    if fib_high is not None and fib_low is not None:
+        fib_levels = calculate_fibonacci_levels(fib_high, fib_low, fib_c)
+
+    # Anchor Stop-Loss to validated Support or Fibonacci Golden Ratio
     if support:
         stop = round(support, 2)
     elif or_high and or_low:
         midpoint = (or_high + or_low) / 2.0
         stop = round(midpoint, 2)
+    elif fib_levels and fib_levels["retracements"]["61.8%"] < entry:
+        stop = round(fib_levels["retracements"]["61.8%"], 2)
     else:
         # Default 0.8% structural buffer if support not specified
         stop = round(entry * 0.992, 2)
@@ -93,15 +138,19 @@ def plan_exit(symbol, entry, or_high=None, or_low=None, risk_reward=1.5, support
     if risk_per_share <= 0:
         raise ValueError(f"Stop loss ({stop}) must be below entry price ({entry})")
 
-    # Anchor Target 1 to Resistance 1 (R1) - De-risking target
+    # Anchor Target 1 to Resistance 1 (R1) or Fib 127.2% extension
     if r1:
         target_1 = round(r1, 2)
+    elif fib_levels and fib_levels["extensions"]["127.2%"] > entry:
+        target_1 = round(fib_levels["extensions"]["127.2%"], 2)
     else:
         target_1 = round(entry + (risk_per_share * 1.0), 2)
 
-    # Anchor Target 2 to Resistance 2 (R2) - Breakout runner target
+    # Anchor Target 2 to Resistance 2 (R2) or Fib 161.8% extension
     if r2:
         target_2 = round(r2, 2)
+    elif fib_levels and fib_levels["extensions"]["161.8%"] > entry:
+        target_2 = round(fib_levels["extensions"]["161.8%"], 2)
     else:
         target_2 = round(entry + (risk_per_share * risk_reward), 2)
 
@@ -138,6 +187,8 @@ def plan_exit(symbol, entry, or_high=None, or_low=None, risk_reward=1.5, support
         "flat_by_time": "15:15 IST",
         "market_close": "15:30 IST"
     }
+    if fib_levels:
+        plan["fibonacci"] = fib_levels
     return plan
 
 
@@ -152,6 +203,9 @@ def main():
     parser.add_argument("--or-low", type=float, help="Opening range low (₹)")
     parser.add_argument("--rr", type=float, default=1.5, help="Reward-to-risk ratio for T2 (default 1.5)")
     parser.add_argument("--atr", type=float, help="Average True Range ATR(14) (₹)")
+    parser.add_argument("--fib-high", type=float, help="Recent significant swing high (₹)")
+    parser.add_argument("--fib-low", type=float, help="Recent significant swing low (₹)")
+    parser.add_argument("--fib-c", type=float, help="Retracement base point C for extension calculation (₹)")
     parser.add_argument("--trail", action="store_true", help="Evaluate current trailing stop stage")
     parser.add_argument("--current-price", type=float, help="Current market price (₹)")
     parser.add_argument("--highest-price", type=float, help="Highest price reached since entry (₹)")
@@ -185,7 +239,20 @@ def main():
         print(f"Rationale:            {res['rationale']}")
         return
 
-    plan = plan_exit(args.symbol, args.entry, args.or_high, args.or_low, args.rr, args.support, args.r1, args.r2, args.atr)
+    plan = plan_exit(
+        args.symbol,
+        args.entry,
+        args.or_high,
+        args.or_low,
+        args.rr,
+        args.support,
+        args.r1,
+        args.r2,
+        args.atr,
+        args.fib_high,
+        args.fib_low,
+        args.fib_c
+    )
     if args.json:
         print(json.dumps(plan, indent=2))
         return
