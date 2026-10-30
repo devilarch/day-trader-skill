@@ -43,6 +43,9 @@ python3 "${CLAUDE_SKILL_DIR}/technical_analysis_indian.py" RELIANCE
 # Analyze with explicit intraday price & volume
 python3 "${CLAUDE_SKILL_DIR}/technical_analysis_indian.py" TATAMOTORS --current-price 980 --current-volume 2500000
 
+# Generate standardized Markdown Action Plan table
+python3 "${CLAUDE_SKILL_DIR}/technical_analysis_indian.py" INFY --action-plan
+
 # JSON output for pipeline integration
 python3 "${CLAUDE_SKILL_DIR}/technical_analysis_indian.py" INFY --json
 ```
@@ -54,7 +57,7 @@ python3 "${CLAUDE_SKILL_DIR}/technical_analysis_indian.py" INFY --json
    - **Exhaustion Rally Warning:** Price up + Volume < 0.8x 20-DMA (Weak rally, high reversal probability).
    - **Distribution:** Price down + Volume > 1.5x 20-DMA.
    - **Selling Exhaustion:** Price down + Volume < 0.8x 20-DMA.
-3. **Probabilistic Scenarios:** Projects Scenario A (Bullish % with target at R1), Scenario B (Bearish % with invalidation at S1), and Scenario C (Rangebound) summing to 100%.
+3. **Probabilistic Scenarios & Action Plan:** Projects Scenario A (Bullish % with target at R1), Scenario B (Bearish % with invalidation at S1), and Scenario C (Rangebound) summing to 100%, and outputs a clean Markdown Action Plan table (`| Action | Trigger | Price | Size | Stop | Target | R:R |`).
 
 ## What it reads and writes
 

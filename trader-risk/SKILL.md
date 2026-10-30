@@ -46,6 +46,26 @@ python3 "${CLAUDE_SKILL_DIR}/check.py" --now "2026-10-19 10:15"  # pin the clock
 | `trader/state/broker.json` | what was placed today: duplicates, trades per day, daily loss, day trades |
 | `trader/state/risk.json` | the verdicts it writes, with a fingerprint of each exact order |
 
+## Indian Market Risk & EV Gatekeeper (`check_indian.py`)
+
+For Indian equities (NSE/BSE) and index options, run `check_indian.py` to enforce strict regulatory cutoffs, account loss limits, and mathematical Expected Value (EV) edge:
+
+```bash
+# Verify equity trade with Expected Value (EV) and win-rate R:R filter
+python3 "${CLAUDE_SKILL_DIR}/check_indian.py" --symbol RELIANCE --qty 16 --entry 1250 --stop 1230 --target-1 1300 --win-rate 0.45
+
+# Multi-target trade check
+python3 "${CLAUDE_SKILL_DIR}/check_indian.py" --symbol INFY --qty 20 --entry 1800 --stop 1760 --target-1 1840 --target-2 1880 --win-rate 0.50
+```
+
+### Risk Gatekeeper Rules:
+1. **Market Hours & Calendar:** Enforces active NSE trading session (09:15–15:30 IST) and respects SEBI holidays.
+2. **15:00 IST Cutoff:** Hard block on all new intraday entries after 15:00 IST (ahead of 15:15 broker square-off).
+3. **Daily Trade & Loss Caps:** Limits daily trade count ($\le 3$ by default) and stops trading once cumulative loss reaches daily cap.
+4. **Expected Value (EV) & Breakeven R:R:** Rejects any trade where:
+   - $\text{Weighted R:R} < \text{Min Breakeven R:R}$ ($\frac{1 - W}{W}$ based on historical win rate $W$).
+   - $\text{Expected Value (EV)} \le 0$ per share.
+
 ## Entries and exits
 
 An **entry** opens or adds to a position: a buy, or a sell that would go
