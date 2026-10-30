@@ -55,9 +55,16 @@ For NSE/BSE intraday planning with S/R levels and progressive 4-stage trailing s
 # Generate S/R anchored exit plan with 4-stage trailing roadmap
 python3 "${CLAUDE_SKILL_DIR}/exit_indian.py" --symbol INFY --entry 1800 --support 1760 --r1 1840 --r2 1880
 
+# Generate Fibonacci-anchored exit plan (Retracements 38.2%-61.8% & Extensions 127.2%-161.8%)
+python3 "${CLAUDE_SKILL_DIR}/exit_indian.py" --symbol INFY --entry 1800 --fib-high 1950 --fib-low 1700 --fib-c 1750
+
 # Evaluate active trailing stop stage during trade execution
 python3 "${CLAUDE_SKILL_DIR}/exit_indian.py" --symbol INFY --entry 1800 --support 1760 --trail --current-price 1890 --highest-price 1900 --atr 20
 ```
+
+### Fibonacci Retracements & Extensions
+- **Retracement Zones:** 23.6%, 38.2%, 50.0%, 61.8% (Golden Ratio entry/stop zone), and 78.6% (invalidation).
+- **Extension Targets:** 100% (measured swing move), 127.2% (conservative target 1), and 161.8% (standard runner target 2).
 
 ### The 4-Stage Progressive Trailing Stop Model:
 - **Stage 1 (0 to <1R):** Hold initial stop fixed at support (protects against premature shakeout).

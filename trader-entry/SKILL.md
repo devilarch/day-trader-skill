@@ -80,6 +80,32 @@ day bar by bar without waiting.
   triggered, expired, or no data. Before 9:30: not open yet. Before 9:45: the
   range is still forming. Weekends and NYSE holidays: the market is closed.
 
+## Indian Market Entry Timing & 3-Screen Confluence (`entry_indian.py`)
+
+For Indian equities (NSE/BSE), watch 5-minute candle opening-range breakouts and evaluate Elder's 3-screen confluence before entering:
+
+```bash
+# Evaluate 3-Screen Multi-Timeframe Confluence (Weekly -> Daily -> Intraday S/R)
+python3 "${CLAUDE_SKILL_DIR}/entry_indian.py" RELIANCE --confluence --support 1230 --resistance 1320
+
+# Watch 5-minute candle ORB trigger in real-time
+python3 "${CLAUDE_SKILL_DIR}/entry_indian.py" RELIANCE.NS
+```
+
+### The 6 Confluence Factors:
+1. **Weekly Trend Bias:** Weekly price $\ge$ 20W SMA or Weekly RSI $\ge 50$.
+2. **Daily Setup Pattern:** Pullback to support, bull flag, or breakout formation.
+3. **Daily RSI:** RSI $\ge 50$ or rebounding out of oversold zone ($> 30$).
+4. **Daily Moving Averages:** Price $\ge$ 20-DMA or 20-DMA $\ge$ 50-DMA.
+5. **Key S/R Anchor:** Validated support level for stop and clear overhead resistance.
+6. **Volume Confirmation:** Breakout volume $\ge 1.4\times$ 20-DMA volume.
+
+**Confluence Sizing Recommendation:**
+- **5-6 Points:** `STRONG_CONFLUENCE` -> Full position size (1.0x).
+- **4 Points:** `GOOD_CONFLUENCE` -> Full position size (1.0x).
+- **3 Points:** `MARGINAL_CONFLUENCE` -> Half position size (0.5x).
+- **0-2 Points:** `WEAK_NO_TRADE` -> Skip / Do not trade (0.0x).
+
 ## Steps
 
 1. Get the symbol from the user, or run `entry.py watchlist` after

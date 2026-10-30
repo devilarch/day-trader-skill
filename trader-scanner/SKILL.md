@@ -178,6 +178,27 @@ and GE a reclaim of the 20-day average, and BAC, MS, RIVN and PLUG oversold,
 as the reel did. On closes it also tags KO (breakout), RCL (flag) and PNC (an
 oversold bounce).
 
+## Indian Market Setup & RSI Divergence Scanner (`scan_indian.py`)
+
+For Indian equities (NSE/BSE liquid 100+ momentum universe):
+
+```bash
+# Scan daily setups (20D breakouts, bull flags, 20-DMA reclaims, RSI oversold bounces, and RSI divergences)
+python3 "${CLAUDE_SKILL_DIR}/scan_indian.py" daily
+
+# Scan 15-minute Opening Range Breakouts (ORB) after 09:30 IST
+python3 "${CLAUDE_SKILL_DIR}/scan_indian.py" orb --min-price 100
+```
+
+### Supported Setup Rules:
+1. **breakout_20d:** Last daily close breaks above the 20-day high.
+2. **bull_flag:** Up >10% over prior 10 days followed by a tight 5-day consolidation band (<5%).
+3. **reclaim_ma20:** Price crosses above the 20-DMA from below.
+4. **oversold / oversold_bounce:** 14-period RSI < 30 rebounding with positive price action.
+5. **bullish_regular_divergence:** Price Lower Low with RSI Higher Low (reversal signal).
+6. **bullish_hidden_divergence:** Price Higher Low with RSI Lower Low (trend continuation pullback).
+7. **orb_breakout:** 5-minute candle closing above the 09:15-09:30 IST opening range with volume check.
+
 ## Rules
 
 - Say what was scanned: how many symbols, how many charts came back, how many
