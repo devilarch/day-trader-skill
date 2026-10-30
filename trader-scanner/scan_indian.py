@@ -88,6 +88,106 @@ def compute_rsi(closes, period=14):
     rs = avg_gain / avg_loss
     return round(100.0 - (100.0 / (1.0 + rs)), 2)
 
+
+def compute_rsi_series(closes, period=14):
+    if len(closes) < period + 1:
+        return [50.0] * len(closes)
+    deltas = [closes[i] - closes[i - 1] for i in range(1, len(closes))]
+    gains = [max(d, 0) for d in deltas[:period]]
+    losses = [abs(min(d, 0)) for d in deltas[:period]]
+    avg_gain = sum(gains) / period
+    avg_loss = sum(losses) / period
+
+    rsis = [50.0] * period
+    first_rs = (avg_gain / avg_loss) if avg_loss != 0 else 100.0
+    first_rsi = 100.0 if avg_loss == 0 else round(100.0 - (100.0 / (1.0 + first_rs)), 2)
+    rsis.append(first_rsi)
+
+    for d in deltas[period:]:
+        gain = max(d, 0)
+        loss = abs(min(d, 0))
+        avg_gain = (avg_gain * (period - 1) + gain) / period
+        avg_loss = (avg_loss * (period - 1) + loss) / period
+        if avg_loss == 0:
+            rsis.append(100.0)
+        else:
+            rs = avg_gain / avg_loss
+            rsis.append(round(100.0 - (100.0 / (1.0 + rs)), 2))
+    return rsis
+
+
+def detect_rsi_divergences(closes: list, rsis: list = None, lookback: int = 30):
+    """
+    Detects Regular and Hidden RSI divergences across price swing extrema:
+      - Regular Bullish: Price Lower Low, RSI Higher Low (reversal)
+      - Hidden Bullish: Price Higher Low, RSI Lower Low (trend continuation)
+      - Regular Bearish: Price Higher High, RSI Lower High (reversal)
+      - Hidden Bearish: Price Lower High, RSI Higher High (trend continuation)
+    """
+    if len(closes) < 20:
+        return []
+
+    if rsis is None or len(rsis) != len(closes):
+        rsis = compute_rsi_series(closes)
+
+    c_win = closes[-lookback:]
+    r_win = rsis[-lookback:]
+    n = len(c_win)
+
+    swing_lows = []
+    swing_highs = []
+    for i in range(1, n - 1):
+        if c_win[i] < c_win[i - 1] and c_win[i] < c_win[i + 1]:
+            swing_lows.append((i, c_win[i], r_win[i]))
+        if c_win[i] > c_win[i - 1] and c_win[i] > c_win[i + 1]:
+            swing_highs.append((i, c_win[i], r_win[i]))
+
+    divergences = []
+
+    # Check Bullish Divergences between the last two swing lows
+    if len(swing_lows) >= 2:
+        (i1, p1, r1) = swing_lows[-2]
+        (i2, p2, r2) = swing_lows[-1]
+        # Regular Bullish (Price Lower Low, RSI Higher Low)
+        if p2 < p1 and r2 > r1:
+            divergences.append({
+                "type": "bullish_regular_divergence",
+                "swing1": (p1, r1),
+                "swing2": (p2, r2),
+                "description": f"Regular Bullish Divergence: Price made lower low (₹{p1:,.2f} -> ₹{p2:,.2f}) while RSI made higher low ({r1} -> {r2})"
+            })
+        # Hidden Bullish (Price Higher Low, RSI Lower Low)
+        elif p2 > p1 and r2 < r1:
+            divergences.append({
+                "type": "bullish_hidden_divergence",
+                "swing1": (p1, r1),
+                "swing2": (p2, r2),
+                "description": f"Hidden Bullish Divergence: Price made higher low (₹{p1:,.2f} -> ₹{p2:,.2f}) while RSI made lower low ({r1} -> {r2})"
+            })
+
+    # Check Bearish Divergences between the last two swing highs
+    if len(swing_highs) >= 2:
+        (i1, p1, r1) = swing_highs[-2]
+        (i2, p2, r2) = swing_highs[-1]
+        # Regular Bearish (Price Higher High, RSI Lower High)
+        if p2 > p1 and r2 < r1:
+            divergences.append({
+                "type": "bearish_regular_divergence",
+                "swing1": (p1, r1),
+                "swing2": (p2, r2),
+                "description": f"Regular Bearish Divergence: Price made higher high (₹{p1:,.2f} -> ₹{p2:,.2f}) while RSI made lower high ({r1} -> {r2})"
+            })
+        # Hidden Bearish (Price Lower High, RSI Higher High)
+        elif p2 < p1 and r2 > r1:
+            divergences.append({
+                "type": "bearish_hidden_divergence",
+                "swing1": (p1, r1),
+                "swing2": (p2, r2),
+                "description": f"Hidden Bearish Divergence: Price made lower high (₹{p1:,.2f} -> ₹{p2:,.2f}) while RSI made higher high ({r1} -> {r2})"
+            })
+
+    return divergences
+
 def scan_daily_setups(symbols, min_price=50.0, limit=None):
     hits = []
     print(f"🔍 Scanning {len(symbols)} Indian symbols for daily setups...")
@@ -139,6 +239,13 @@ def scan_daily_setups(symbols, min_price=50.0, limit=None):
         elif rsi_prev and rsi_prev < 30.0 and last > prev and rsi_now > rsi_prev:
             hits.append({"symbol": sym, "setup": "oversold_bounce", "price": last, "detail": f"Rebounded from RSI {rsi_prev} to {rsi_now}"})
             continue
+
+        # 6. RSI Divergences (Regular & Hidden)
+        divs = detect_rsi_divergences(closes)
+        for d in divs:
+            if d["type"].startswith("bullish"):
+                hits.append({"symbol": sym, "setup": d["type"], "price": last, "detail": d["description"]})
+                break
 
     return hits
 
