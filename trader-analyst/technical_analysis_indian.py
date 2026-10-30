@@ -219,6 +219,32 @@ def generate_technical_assessment(symbol: str, candles: list, current_price: flo
     }
 
 
+def format_action_plan_table(assessment: dict, plan: dict = None, sizing: dict = None):
+    """
+    Formats standardized Markdown Action Plan table matching nse-trading-toolkit schema:
+    | Action | Trigger | Price | Size | Stop | Target | R:R |
+    """
+    sc = assessment.get("scenarios", {})
+    bull = sc.get("scenario_a_bullish", {})
+    bear = sc.get("scenario_b_bearish", {})
+    side = sc.get("scenario_c_sideways", {})
+
+    price_str = f"₹{plan['entry']:,.2f}" if plan and "entry" in plan else f"₹{assessment.get('current_price', 0):,.2f}"
+    stop_str = f"₹{plan['stop_loss']:,.2f}" if plan and "stop_loss" in plan else bull.get("invalidation", "Support")
+    target_str = f"₹{plan['target_1']:,.2f}" if plan and "target_1" in plan else bull.get("target", "Resistance")
+    size_str = f"{sizing['shares']} sh" if sizing and "shares" in sizing else "Per budget"
+    rr_str = plan.get("rr_t1", ">= 1.5:1") if plan else ">= 1.5:1"
+
+    lines = [
+        "| Action | Trigger | Price | Size | Stop | Target | R:R |",
+        "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
+        f"| **BUY / BREAKOUT** ({bull.get('probability_pct', 0)}%) | {bull.get('trigger', 'Hold support')} | {price_str} | {size_str} | {stop_str} | {target_str} | {rr_str} |",
+        f"| **EXIT / REVERSAL** ({bear.get('probability_pct', 0)}%) | {bear.get('trigger', 'Break support')} | {stop_str} | Full | N/A | {bear.get('target', 'Support')} | Exit |",
+        f"| **RANGE / HOLD** ({side.get('probability_pct', 0)}%) | {side.get('range', 'Inside range')} | Market | 0 sh | N/A | N/A | Wait |"
+    ]
+    return "\n".join(lines)
+
+
 def fetch_yahoo_candles(symbol: str, range_str: str = "3mo", interval: str = "1d"):
     """Fetches online candles from Yahoo Finance with Indian ticker normalization."""
     clean_sym = symbol.strip().upper()
@@ -256,6 +282,7 @@ def main():
     parser.add_argument("--candles-file", help="Path to JSON file with candle data")
     parser.add_argument("--current-price", type=float, help="Explicit current price (₹)")
     parser.add_argument("--current-volume", type=float, help="Explicit current volume")
+    parser.add_argument("--action-plan", action="store_true", help="Print standardized Markdown Action Plan table")
     parser.add_argument("--json", action="store_true", help="Output as JSON")
     args = parser.parse_args()
 
@@ -302,6 +329,12 @@ def main():
     print(f"  [A] Bullish ({sc['scenario_a_bullish']['probability_pct']}%): {sc['scenario_a_bullish']['trigger']} -> Target {sc['scenario_a_bullish']['target']}")
     print(f"  [B] Bearish ({sc['scenario_b_bearish']['probability_pct']}%): {sc['scenario_b_bearish']['trigger']} -> Target {sc['scenario_b_bearish']['target']}")
     print(f"  [C] Sideways ({sc['scenario_c_sideways']['probability_pct']}%): Range {sc['scenario_c_sideways']['range']}")
+
+    if args.action_plan:
+        print("\n" + "=" * 65)
+        print("📋 STANDARDIZED ACTION PLAN TABLE:")
+        print("=" * 65)
+        print(format_action_plan_table(assessment))
 
 
 if __name__ == "__main__":
