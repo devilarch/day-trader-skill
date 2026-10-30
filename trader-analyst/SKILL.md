@@ -32,6 +32,30 @@ It needs the SEC User-Agent (`sec_user_agent` in `trader/config.json`, or
 `SEC_USER_AGENT`): "Your Name you@example.com" with the user's real name and
 email. It refuses to call SEC without one.
 
+## Indian Market Technical S/R & Volume Analysis (`technical_analysis_indian.py`)
+
+For Indian equities (NSE/BSE), use `technical_analysis_indian.py` to analyze support/resistance levels, volume confirmation, and probabilistic scenarios before trading:
+
+```bash
+# Analyze any NSE stock (fetches live candles from Yahoo Finance)
+python3 "${CLAUDE_SKILL_DIR}/technical_analysis_indian.py" RELIANCE
+
+# Analyze with explicit intraday price & volume
+python3 "${CLAUDE_SKILL_DIR}/technical_analysis_indian.py" TATAMOTORS --current-price 980 --current-volume 2500000
+
+# JSON output for pipeline integration
+python3 "${CLAUDE_SKILL_DIR}/technical_analysis_indian.py" INFY --json
+```
+
+### Analysis Checklist:
+1. **Support & Resistance:** Validates horizontal swing highs and lows with at least 2 touches, psychological round numbers (₹500, ₹1000, ₹2500), and dynamic moving averages (SMA20, SMA50, SMA200).
+2. **Volume Confirmation:**
+   - **Confirmed Expansion:** Price up + Volume > 1.5x 20-DMA (Institutional buying).
+   - **Exhaustion Rally Warning:** Price up + Volume < 0.8x 20-DMA (Weak rally, high reversal probability).
+   - **Distribution:** Price down + Volume > 1.5x 20-DMA.
+   - **Selling Exhaustion:** Price down + Volume < 0.8x 20-DMA.
+3. **Probabilistic Scenarios:** Projects Scenario A (Bullish % with target at R1), Scenario B (Bearish % with invalidation at S1), and Scenario C (Rangebound) summing to 100%.
+
 ## What it reads and writes
 
 - Reads `https://data.sec.gov/api/xbrl/companyfacts/CIK##########.json` (every

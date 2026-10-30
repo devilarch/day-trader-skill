@@ -140,6 +140,22 @@ needs prices (`--prices trader/prices.json`). These are plain buys with no stop:
 `require_stop` is true and counts each one against `max_trades_per_day`. Use
 a separate config (`--config`) for a long-term split.
 
+## Indian Market Sizing (`size_indian.py`)
+
+For NSE/BSE cash equities and index options, run `size_indian.py`:
+
+```bash
+# 1x Cash Equity Mode (Strict <2% risk, zero leverage, 20% single-stock cap)
+python3 "${CLAUDE_SKILL_DIR}/size_indian.py" --mode cash --symbol RELIANCE --entry 1250 --stop 1230 --capital 100000 --risk-pct 1.5
+
+# Index Options Mode (NIFTY 25, BANKNIFTY 15, SENSEX 10 lot bounds)
+python3 "${CLAUDE_SKILL_DIR}/size_indian.py" --mode options --symbol NIFTY --entry 120 --stop 95 --capital 50000 --max-loss 2000
+```
+
+- **Zero Leverage & 1x Cash Rule:** Enforces $\text{Capital Required} \le \text{Account Cash}$.
+- **Strict < 2% Risk Rule:** Rejects any trade risking $\ge 2.0\%$ of account capital at stop-loss.
+- **Single-Stock Cap:** Caps position size at 20% of account capital.
+
 ## Rules
 
 - Proposals only. This skill never calls a broker tool.

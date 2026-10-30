@@ -122,6 +122,19 @@ An example, the trade in the reel: Tesla, Monday October 19 2026, real data.
 
 ## The tools
 
+```bash
+# Indian Equity Market (NSE/BSE) Execution Pipeline
+python3 trader-analyst/technical_analysis_indian.py RELIANCE          # S/R mapping & volume confirmation matrix
+python3 trader-scanner/scan_indian.py daily                           # 100+ liquid Indian stocks daily setups
+python3 trader-scanner/scan_indian.py orb --min-price 100             # 15m opening range breakout scanner
+python3 trader-news/news_indian.py --tickers RELIANCE,TCS             # live Indian market Google News RSS & price moves
+python3 trader-entry/entry_indian.py RELIANCE.NS                      # 5m candle ORB entry watcher
+python3 trader-exit/exit_indian.py --symbol INFY --entry 1800 --support 1760  # S/R exit plan + 4-stage trailing stop
+python3 trader-exit/exit_indian.py --trail --current-price 1890       # dynamic trailing stop ratchet evaluation
+python3 trader-budget/size_indian.py --mode cash --entry 1250 --stop 1230     # 1x cash sizing (<2% risk & 20% cap)
+python3 trader-risk/check_indian.py --symbol RELIANCE --qty 16 --entry 1250 --stop 1230  # NSE risk & cutoff checks
+```
+
 All standard-library Python. The data tools read public endpoints and are
 polite about it.
 

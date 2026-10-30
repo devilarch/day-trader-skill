@@ -47,6 +47,25 @@ level`, `--offline FILE` (a saved Yahoo chart JSON for an ATR stop).
 | Yahoo chart API | only for an `atr:K` stop: the session's bars up to the entry bar, free and unofficial |
 | `trader/plan.json` | with `--write`: entry, stop and its rule, target and its R, risk a share, reward:risk, flat by. trader-timemachine, trader-budget and trader-alerts read it |
 
+## Indian Market Exit & Hybrid Trailing Stops (`exit_indian.py`)
+
+For NSE/BSE intraday planning with S/R levels and progressive 4-stage trailing stops:
+
+```bash
+# Generate S/R anchored exit plan with 4-stage trailing roadmap
+python3 "${CLAUDE_SKILL_DIR}/exit_indian.py" --symbol INFY --entry 1800 --support 1760 --r1 1840 --r2 1880
+
+# Evaluate active trailing stop stage during trade execution
+python3 "${CLAUDE_SKILL_DIR}/exit_indian.py" --symbol INFY --entry 1800 --support 1760 --trail --current-price 1890 --highest-price 1900 --atr 20
+```
+
+### The 4-Stage Progressive Trailing Stop Model:
+- **Stage 1 (0 to <1R):** Hold initial stop fixed at support (protects against premature shakeout).
+- **Stage 2 (+1R gain):** Move stop strictly to **Breakeven** (entry price).
+- **Stage 3 (+2R gain):** Engage **ATR Trail** (`Highest Close - 1.5x ATR`).
+- **Stage 4 (+3R+ gain):** Engage **Structure Trail** (ratchet stop below recent 5m/15m swing low).
+- **Ratchet Rule:** Trailing stops strictly move only up for longs, never downward.
+
 ## Stops and targets
 
 ### Mandatory Resistance & Support Anchoring
