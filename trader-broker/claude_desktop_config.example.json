@@ -2,7 +2,14 @@
   "mcpServers": {
     "zerodha": {
       "command": "npx",
-      "args": ["mcp-remote", "https://mcp.kite.trade/mcp"]
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.kite.trade/mcp",
+        "--keep-alive",
+        "--ping-interval",
+        "25"
+      ]
     },
     "zerodha-local": {
       "command": "node",

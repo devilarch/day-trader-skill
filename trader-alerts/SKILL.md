@@ -39,6 +39,7 @@ python3 "${CLAUDE_SKILL_DIR}/alerts.py" quote TSLA --write             # -> trad
 python3 "${CLAUDE_SKILL_DIR}/alerts.py" quote --holdings --write       # portfolio + plan tickers
 python3 "${CLAUDE_SKILL_DIR}/alerts.py" list
 python3 "${CLAUDE_SKILL_DIR}/alerts.py" reset tsla-plan-stop
+python3 "${CLAUDE_SKILL_DIR}/monitor.py"                               # 1-minute live position & PnL monitor with HOLD/SELL analysis
 ```
 
 `--now "2026-10-19 15:55"` pins the clock (New York time); `--offline DIR`

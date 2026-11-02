@@ -67,7 +67,14 @@ Zerodha Kite Connect can be connected via official or community MCP servers:
   "mcpServers": {
     "zerodha": {
       "command": "npx",
-      "args": ["mcp-remote", "https://mcp.kite.trade/mcp"]
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.kite.trade/mcp",
+        "--keep-alive",
+        "--ping-interval",
+        "25"
+      ]
     }
   }
 }
