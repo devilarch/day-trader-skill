@@ -27,6 +27,12 @@ separate gates, every time, for every order:
 
 Two yeses from the user, one PASS from the rules. No yes, no order.
 
+### Mandatory Trading Rules (Strictly Enforced)
+1. **Mandatory Stop-Loss at Ticket Creation:** Every buy ticket MUST include the exact stop-loss price, target (>= 2:1 R:R), and maximum loss calculated at the time the ticket is created. Never propose a ticket without its concrete stop-loss.
+2. **Strict <= 1.0% Maximum Loss Rule:** Total potential loss across all open/proposed trades plus realized loss today must strictly NOT exceed 1.0% of total account capital (₹100 on ₹10,000 capital).
+3. **Minimum 2:1 Reward-to-Risk (2R Target):** If taking risk of 1R, target profit must be at least 2R (Reward:Risk >= 2.0:1). 1:1 risk-to-reward setups are strictly forbidden and blocked.
+4. **Immediate Exchange Stop-Loss:** The exact moment an entry buy order fills on Zerodha, place the broker-level Stop-Loss order immediately.
+
 `${CLAUDE_SKILL_DIR}` below is this skill's folder (where this SKILL.md lives).
 
 ```bash

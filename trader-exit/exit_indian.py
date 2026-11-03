@@ -138,21 +138,25 @@ def plan_exit(symbol, entry, or_high=None, or_low=None, risk_reward=1.5, support
     if risk_per_share <= 0:
         raise ValueError(f"Stop loss ({stop}) must be below entry price ({entry})")
 
-    # Anchor Target 1 to Resistance 1 (R1) or Fib 127.2% extension
+    # Enforce minimum 2:1 Reward to Risk ratio: Target 1 must be at least 2.0R (twice the risk taken)
+    min_2r = round(entry + (risk_per_share * 2.0), 2)
+    min_3r = round(entry + (risk_per_share * 3.0), 2)
+
+    # Anchor Target 1 to Resistance 1 (R1) or Fib 127.2% extension (must be >= 2R)
     if r1:
-        target_1 = round(r1, 2)
-    elif fib_levels and fib_levels["extensions"]["127.2%"] > entry:
+        target_1 = round(max(r1, min_2r), 2)
+    elif fib_levels and fib_levels["extensions"]["127.2%"] >= min_2r:
         target_1 = round(fib_levels["extensions"]["127.2%"], 2)
     else:
-        target_1 = round(entry + (risk_per_share * 1.0), 2)
+        target_1 = min_2r
 
-    # Anchor Target 2 to Resistance 2 (R2) or Fib 161.8% extension
+    # Anchor Target 2 to Resistance 2 (R2) or Fib 161.8% extension (must be >= 3R)
     if r2:
-        target_2 = round(r2, 2)
-    elif fib_levels and fib_levels["extensions"]["161.8%"] > entry:
+        target_2 = round(max(r2, min_3r), 2)
+    elif fib_levels and fib_levels["extensions"]["161.8%"] >= min_3r:
         target_2 = round(fib_levels["extensions"]["161.8%"], 2)
     else:
-        target_2 = round(entry + (risk_per_share * risk_reward), 2)
+        target_2 = min_3r
 
     reward_t1 = round(target_1 - entry, 2)
     reward_t2 = round(target_2 - entry, 2)

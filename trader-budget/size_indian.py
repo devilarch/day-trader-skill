@@ -30,7 +30,7 @@ def calculate_cash_equity_shares(
     """
     Computes exact share size for 1x Cash Equity trading on NSE/BSE:
       - Zero leverage: Capital required <= Account cash.
-      - Strict Risk Rule: Risk % must be strictly < 2.0% of total capital.
+      - Strict Risk Rule: Risk % must be strictly <= 1.0% of total capital.
       - Single-stock Cap: Max position size capped at single_stock_cap_pct (default 20%).
     """
     if capital <= 0:
@@ -39,12 +39,12 @@ def calculate_cash_equity_shares(
         raise ValueError("Entry price must be greater than zero")
     if stop >= entry:
         raise ValueError(f"Stop loss (₹{stop}) must be below entry price (₹{entry})")
-    if risk_pct >= 2.0:
-        raise ValueError(f"Risk percentage ({risk_pct}%) must be strictly < 2.0% of capital")
+    if risk_pct > 1.0:
+        raise ValueError(f"Risk percentage ({risk_pct}%) must be strictly <= 1.0% of capital")
 
     risk_per_share = entry - stop
 
-    # Allowed rupee risk based on user risk percentage (strictly < 2%)
+    # Allowed rupee risk based on user risk percentage (strictly <= 1.0%)
     max_loss_by_pct = capital * (risk_pct / 100.0)
     allowed_loss = min(max_loss_by_pct, max_loss_inr) if max_loss_inr else max_loss_by_pct
 

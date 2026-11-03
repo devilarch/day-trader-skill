@@ -26,13 +26,33 @@ CONFIG_FILE = os.path.join(os.path.dirname(__file__), "..", "config_indian.json"
 
 
 def load_config():
+    trader_cfg = os.path.join("trader", "config.json")
+    if os.path.exists(trader_cfg):
+        try:
+            with open(trader_cfg, "r") as f:
+                c = json.load(f)
+                budget = float(c.get("budget", 10000.0))
+                pct = float(c.get("max_loss_pct", 1.0))
+                limit_1pct = round(budget * (pct / 100.0), 2)
+                return {
+                    "budget": budget,
+                    "max_loss_per_trade_inr": float(c.get("max_loss_per_trade_inr", limit_1pct)),
+                    "max_daily_loss_inr": float(c.get("max_daily_loss_inr", limit_1pct)),
+                    "max_trades_per_day": int(c.get("max_trades_per_day", 3)),
+                    "require_stop": bool(c.get("require_stop", True)),
+                    "indices": {"NIFTY": {"lot_size": 25}, "BANKNIFTY": {"lot_size": 15}, "SENSEX": {"lot_size": 10}}
+                }
+        except Exception:
+            pass
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, "r") as f:
             return json.load(f)
     return {
-        "max_loss_per_trade_inr": 2000,
-        "max_daily_loss_inr": 5000,
+        "budget": 10000.0,
+        "max_loss_per_trade_inr": 100.0,
+        "max_daily_loss_inr": 100.0,
         "max_trades_per_day": 3,
+        "require_stop": True,
         "indices": {"NIFTY": {"lot_size": 25}, "BANKNIFTY": {"lot_size": 15}, "SENSEX": {"lot_size": 10}}
     }
 
@@ -124,24 +144,31 @@ def check_order_risk(symbol, qty, entry, stop, realized_loss_today=0, trades_tod
         reasons.append(f"TIME_LIMIT: Entries blocked after 15:00 IST (Current: {now_ist.strftime('%H:%M')})")
         passed = False
 
+    # Mandatory Stop Loss check - must be set at ticket creation time
+    if stop is None or stop <= 0:
+        reasons.append("MANDATORY_STOP_LOSS: Stop loss is mandatory and must be set at ticket creation time.")
+        passed = False
+        risk_per_share = 0
+    else:
+        risk_per_share = abs(entry - stop)
+
     # Check Max Trades per Day
     max_trades = cfg.get("max_trades_per_day", 3)
     if trades_today >= max_trades:
         reasons.append(f"TRADES_LIMIT: Reached daily limit of {max_trades} trades")
         passed = False
 
-    # Check Daily Loss
-    max_daily_loss = cfg.get("max_daily_loss_inr", 5000)
-    if realized_loss_today >= max_daily_loss:
-        reasons.append(f"DAILY_LOSS_LIMIT: Realized ₹{realized_loss_today} loss reaches ₹{max_daily_loss} cap")
+    # Check Strict 1% Trade Risk & Combined Daily Loss
+    total_trade_risk = qty * risk_per_share
+    max_trade_loss = cfg.get("max_loss_per_trade_inr", 100.0)
+    if total_trade_risk > max_trade_loss:
+        reasons.append(f"TRADE_LOSS_LIMIT: Potential loss ₹{total_trade_risk:.2f} exceeds strict limit of ₹{max_trade_loss:.2f}")
         passed = False
 
-    # Check Trade Risk
-    risk_per_share = abs(entry - stop)
-    total_trade_risk = qty * risk_per_share
-    max_trade_loss = cfg.get("max_loss_per_trade_inr", 2000)
-    if total_trade_risk > max_trade_loss:
-        reasons.append(f"TRADE_LOSS_LIMIT: Potential loss ₹{total_trade_risk:.2f} exceeds cap of ₹{max_trade_loss}")
+    max_daily_loss = cfg.get("max_daily_loss_inr", 100.0)
+    total_combined_risk = realized_loss_today + total_trade_risk
+    if total_combined_risk > max_daily_loss:
+        reasons.append(f"STRICT_1PCT_DAILY_LOSS: Combined loss (realized ₹{realized_loss_today:.2f} + trade risk ₹{total_trade_risk:.2f} = ₹{total_combined_risk:.2f}) exceeds strict 1% cap of ₹{max_daily_loss:.2f}")
         passed = False
 
     # Check Lot multiples for Indices
@@ -158,6 +185,10 @@ def check_order_risk(symbol, qty, entry, stop, realized_loss_today=0, trades_tod
         rr_eval = evaluate_rr_and_ev(entry=entry, stop=stop, target_1=target_1, target_2=target_2, win_rate=win_rate)
         if not rr_eval["is_viable"]:
             reasons.append(f"RR_EV_REJECTED: {'; '.join(rr_eval['reasons'])}")
+            passed = False
+        min_rr = cfg.get("min_reward_risk", 2.0)
+        if rr_eval["weighted_rr"] < min_rr:
+            reasons.append(f"SUB_MINIMUM_RR: Weighted R:R {rr_eval['weighted_rr']}:1 is below strict minimum {min_rr}:1 rule")
             passed = False
 
     return {

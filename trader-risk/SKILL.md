@@ -26,6 +26,12 @@ BLOCK is final for that order: it does not go to the user for a yes, and it
 does not go to the broker. Most people who day trade lose money. These limits
 keep each loss and each day's losses small. They do not make a trade win.
 
+### Strict Core Rules
+1. **Strict <= 1.0% Capital Risk Cap:** Combined potential loss at stops + realized loss today must be <= 1.0% of capital (<= ₹100 on ₹10,000 capital). Any order exceeding this is strictly BLOCKED.
+2. **Mandatory Stop-Loss at Ticket Creation:** Every buy order MUST have an explicit stop-loss price and max loss defined at ticket creation. Orders without a stop are strictly BLOCKED.
+3. **Minimum 2:1 Reward-to-Risk (2R):** Reward-to-risk ratio must be >= 2.0:1 ((Target - Entry) / (Entry - Stop) >= 2.0). 1:1 trades are strictly BLOCKED.
+4. **Zero Leverage (1x Cash):** Order value must never exceed available cash. Intraday margin multipliers (e.g. 5x) are disabled.
+
 `${CLAUDE_SKILL_DIR}` below is this skill's folder (where this SKILL.md lives).
 
 ```bash

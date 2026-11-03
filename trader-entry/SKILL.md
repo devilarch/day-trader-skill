@@ -58,6 +58,19 @@ day bar by bar without waiting.
   supports (S1, S2), and volume profiles. Never recommend buying right below an
   untested resistance wall without highlighting the resistance or waiting for a
   confirmed volume breakout above it.
+- **Strict Breakout Confirmation (No Anticipation):**
+  Never enter inside the opening range on anticipation. Entry ONLY triggers when a completed
+  5-minute or 15-minute bar CLOSES cleanly above the Opening Range High (OR High).
+- **Opening Rejection Wick Filter:**
+  Disqualify or delay long entries if the opening 15-minute bar (or first 5-minute candle)
+  left a long upper shadow (> 30% of total candle range). A large upper wick signals aggressive
+  opening supply/dumping by institutional sellers into retail liquidity.
+- **Volume Expansion Rule:**
+  The breakout candle volume MUST expand (at least 1.2x to 1.5x the average volume of preceding
+  consolidation bars). A price attempting to break higher on drying or diverging volume is a bull trap.
+- **Consecutive Lower Highs Invalidation:**
+  If post-open bars form consecutive lower highs (e.g., 892.80 -> 890.50 -> 890.00), any long
+  setup is strictly INVALIDATED until the session high is reclaimed on expanding volume.
 - **Opening range (orb).** The high and low of the first 15 minutes: the
   9:30, 9:35 and 9:40 five-minute bars, or fifteen 1-minute bars. The level
   to beat is the range high.
